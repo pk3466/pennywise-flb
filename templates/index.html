@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pennywise — AI Budget Planner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-mark">p</div><span>pennywise</span></div>
+    <div class="side-label">WORKSPACE</div>
+    <a class="nav-link active" href="#"><span>▦</span> Overview</a>
+    <a class="nav-link" href="#transactions"><span>↗</span> Transactions</a>
+    <a class="nav-link" href="#budgets"><span>◷</span> Budgets</a>
+    <a class="nav-link" href="#insights"><span>✧</span> AI Insights</a>
+    <div class="sidebar-bottom">
+      <div class="side-tip">
+        <div class="tip-icon">✦</div>
+        <strong>Small steps add up.</strong>
+        <p>Track your spending today to build better money habits tomorrow.</p>
+      </div>
+      <div class="profile"><div class="avatar">Y</div><div><strong>Your workspace</strong><small>Personal account</small></div></div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <div><div class="eyebrow">YOUR MONEY, IN FOCUS</div><h1>Good money habits start here<span class="period">.</span></h1></div>
+      <div class="top-actions"><input type="month" id="monthPicker" aria-label="Select month"><a class="export-btn" id="exportBtn" href="/api/export">↓ <span>Export</span></a></div>
+    </header>
+
+    <section class="welcome-row">
+      <div><h2>Your financial overview</h2><p>Here’s how your money is moving this month.</p></div>
+      <button class="primary-btn" id="openTransaction">＋ Add transaction</button>
+    </section>
+
+    <section class="stats-grid">
+      <article class="stat-card"><div class="stat-top"><span>Total income</span><span class="stat-icon income-icon">↙</span></div><div class="stat-value" id="incomeValue">₹0</div><div class="stat-foot">Money coming in</div></article>
+      <article class="stat-card"><div class="stat-top"><span>Total expenses</span><span class="stat-icon expense-icon">↗</span></div><div class="stat-value" id="expenseValue">₹0</div><div class="stat-foot">Money going out</div></article>
+      <article class="stat-card"><div class="stat-top"><span>Available balance</span><span class="stat-icon balance-icon">◈</span></div><div class="stat-value" id="balanceValue">₹0</div><div class="stat-foot">Income minus expenses</div></article>
+      <article class="stat-card savings-card"><div class="stat-top"><span>Savings rate</span><span class="stat-icon savings-icon">✦</span></div><div class="stat-value" id="savingsValue">0%</div><div class="stat-foot">Your income saved</div></article>
+    </section>
+
+    <section class="content-grid">
+      <article class="panel spending-panel">
+        <div class="panel-heading"><div><h3>Spending breakdown</h3><p>Where your money goes</p></div><span class="soft-tag">THIS MONTH</span></div>
+        <div class="chart-wrap"><canvas id="spendingChart"></canvas><div class="chart-empty" id="chartEmpty">Add expenses to see your spending breakdown.</div></div>
+        <div id="legend" class="custom-legend"></div>
+      </article>
+      <article class="panel insights-panel" id="insights">
+        <div class="panel-heading"><div><h3><span class="sparkle">✧</span> AI money insights</h3><p>Personalized suggestions from your activity</p></div><span class="ai-tag">AI POWERED</span></div>
+        <div id="recommendations" class="recommendations"><div class="recommendation"><span class="rec-bullet">✦</span><p>Add transactions to receive personalized insights.</p></div></div>
+        <div class="model-note"><span class="pulse"></span> ML expense categorizer is ready</div>
+      </article>
+    </section>
+
+    <section class="content-grid lower-grid">
+      <article class="panel transactions-panel" id="transactions">
+        <div class="panel-heading"><div><h3>Recent transactions</h3><p>Your latest money movements</p></div><button class="text-btn" id="viewAll">View all</button></div>
+        <div class="table-wrap"><table><thead><tr><th>DESCRIPTION</th><th>CATEGORY</th><th>DATE</th><th>AMOUNT</th><th></th></tr></thead><tbody id="transactionRows"><tr><td colspan="5" class="empty-row">No transactions yet. Add your first one!</td></tr></tbody></table></div>
+      </article>
+      <article class="panel budget-panel" id="budgets">
+        <div class="panel-heading"><div><h3>Monthly budgets</h3><p>Keep your spending on track</p></div><span class="budget-symbol">◷</span></div>
+        <form id="budgetForm" class="budget-form">
+          <label>Category<select id="budgetCategory" required>{% for c in categories %}<option value="{{c}}">{{c}}</option>{% endfor %}</select></label>
+          <label>Monthly limit (₹)<input type="number" id="budgetLimit" min="0" step="1" placeholder="e.g. 5000" required></label>
+          <button class="secondary-btn" type="submit">Save budget</button>
+        </form>
+        <div id="budgetProgress" class="budget-progress"><p class="muted-empty">Set a category limit to track your budget.</p></div>
+      </article>
+    </section>
+    <footer>Made for smarter money decisions <span>·</span> Pennywise AI Budget Planner</footer>
+  </main>
+</div>
+
+<div class="modal-backdrop" id="transactionModal">
+  <div class="modal">
+    <div class="modal-head"><div><div class="eyebrow">KEEP YOUR MONEY IN CHECK</div><h2>Add transaction</h2></div><button class="close-btn" id="closeModal" aria-label="Close">×</button></div>
+    <form id="transactionForm">
+      <div class="type-toggle"><button type="button" class="type-btn selected" data-kind="expense">Expense</button><button type="button" class="type-btn" data-kind="income">Income</button></div>
+      <label>Description<input type="text" id="description" maxlength="120" placeholder="e.g. Lunch at cafe" required></label>
+      <div class="ai-prediction" id="predictionBox"><span class="sparkle">✧</span><span id="predictionText">AI category suggestion will appear as you type.</span></div>
+      <div class="form-two">
+        <label>Amount (₹)<input type="number" id="amount" min="0.01" step="0.01" placeholder="0.00" required></label>
+        <label>Date<input type="date" id="txDate" value="{{today}}" required></label>
+      </div>
+      <label id="categoryLabel">Category<select id="category">{% for c in categories %}<option value="{{c}}">{{c}}</option>{% endfor %}</select></label>
+      <div class="modal-actions"><button type="button" class="cancel-btn" id="cancelModal">Cancel</button><button type="submit" class="primary-btn">Save transaction</button></div>
+      <div class="form-error" id="formError"></div>
+    </form>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
